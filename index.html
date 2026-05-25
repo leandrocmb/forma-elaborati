@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elenco Elaborati | Autodesk Forma</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg0:#08111f; --bg1:#0f1b2d; --bg2:#162032; --bg3:#1e2d40; --bg4:#263549;
+  --border:#243044; --border2:#2e3d52;
+  --t1:#e8f1fa; --t2:#a8bdd4; --t3:#6d8aa4; --t4:#405a72;
+  --blue:#3b82f6; --blue2:#1d5fc0; --blue-bg:#0e2140;
+  --cyan:#22d3ee; --cyan-bg:#042832;
+  --green:#10b981; --green-bg:#052b1e;
+  --amber:#f59e0b; --amber-bg:#2a1700;
+  --red:#f87171; --red-bg:#2a0808;
+  --purple:#a78bfa; --gray:#6b7280;
+  --font-mono:'SF Mono','Fira Code','Cascadia Code',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg0);color:var(--t1);font-size:13px;min-height:100vh;line-height:1.5}
+
+/* ─── HEADER ─── */
+.hdr{background:var(--bg1);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;height:54px;gap:14px;position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:9px;font-weight:700;font-size:14px;letter-spacing:.01em}
+.logo-icon{width:30px;height:30px;background:linear-gradient(135deg,#1a5fc0,#3b82f6);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff}
+.vsep{width:1px;height:20px;background:var(--border2)}
+.proj-pill{background:var(--bg3);border:1px solid var(--border2);padding:4px 11px;border-radius:20px;font-size:11px;color:var(--t3);display:flex;align-items:center;gap:6px;cursor:pointer;transition:all .15s}
+.proj-pill:hover{border-color:var(--blue);color:var(--t2)}
+.proj-dot{width:6px;height:6px;border-radius:50%;background:var(--amber)}
+.proj-dot.on{background:var(--green)}
+.ml-a{margin-left:auto}
+.api-badge{font-size:11px;color:var(--t4);display:flex;align-items:center;gap:5px}
+
+/* ─── TABS ─── */
+.tabs{background:var(--bg1);border-bottom:1px solid var(--border);padding:0 24px;display:flex}
+.tab{padding:11px 18px;cursor:pointer;font-size:12px;font-weight:500;color:var(--t3);border-bottom:2px solid transparent;transition:all .15s;letter-spacing:.02em;text-transform:uppercase}
+.tab:hover{color:var(--t2)}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+
+/* ─── LAYOUT ─── */
+.page{padding:22px 26px;max-width:1360px;margin:0 auto}
+.panel{display:none}.panel.active{display:block}
+
+/* ─── STAT CARDS ─── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.scard{background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:16px 18px;position:relative;overflow:hidden}
+.scard::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;border-radius:10px 0 0 10px}
+.scard.b::before{background:var(--blue)}
+.scard.a::before{background:var(--amber)}
+.scard.c::before{background:var(--cyan)}
+.scard.g::before{background:var(--green)}
+.slabel{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--t4);margin-bottom:8px;font-weight:600}
+.sval{font-size:30px;font-weight:800;line-height:1;margin-bottom:4px}
+.ssub{font-size:11px;color:var(--t3)}
+
+/* ─── DISCIPLINE PROGRESS ─── */
+.dprog{background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:20px}
+.section-title{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--t4);font-weight:600;margin-bottom:14px}
+.drow{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.drow:last-child{margin-bottom:0}
+.dname{width:160px;font-size:12px;color:var(--t2);flex-shrink:0}
+.dbar{flex:1;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.dfill{height:100%;border-radius:3px;transition:width .6s ease}
+.dcnt{width:80px;font-size:11px;color:var(--t3);text-align:right;font-family:var(--font-mono)}
+
+/* ─── CHARTS ─── */
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.ccard{background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:18px 20px}
+
+/* ─── TOOLBAR ─── */
+.toolbar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+input.search{background:var(--bg1);border:1px solid var(--border2);border-radius:7px;padding:7px 12px;font-size:12px;color:var(--t1);width:230px;outline:none;transition:border-color .15s}
+input.search:focus{border-color:var(--blue)}
+input.search::placeholder{color:var(--t4)}
+select.fsel{background:var(--bg1);border:1px solid var(--border2);border-radius:7px;padding:7px 10px;font-size:12px;color:var(--t2);outline:none;cursor:pointer;transition:border-color .15s}
+select.fsel:focus{border-color:var(--blue)}
+.btn{padding:7px 14px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid transparent;transition:all .15s;display:inline-flex;align-items:center;gap:5px}
+.btn-p{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-p:hover{background:var(--blue2);border-color:var(--blue2)}
+.btn-g{background:transparent;color:var(--t2);border-color:var(--border2)}
+.btn-g:hover{background:var(--bg3);border-color:var(--border2)}
+.btn-d{background:transparent;color:var(--red);border-color:transparent}
+.btn-d:hover{background:var(--red-bg)}
+.btn-sm{padding:4px 8px;font-size:11px}
+.btn-ic{padding:5px 7px;font-size:13px}
+
+/* ─── TABLE ─── */
+.twrap{background:var(--bg1);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+th{background:var(--bg2);padding:9px 13px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--t4);font-weight:600;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:10px 13px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg2)}
+.tcode{font-family:var(--font-mono);font-size:11px;color:var(--cyan)}
+.td-act{display:flex;gap:4px;justify-content:flex-end}
+.td-ell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.td-muted{color:var(--t3)}
+.td-mono{font-family:var(--font-mono);color:var(--t3)}
+.td-red{color:var(--red)}
+
+/* ─── BADGES ─── */
+.badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap;letter-spacing:.03em}
+.bwip{background:rgba(245,158,11,.12);color:var(--amber);border:1px solid rgba(245,158,11,.2)}
+.brev{background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.2)}
+.bemi{background:rgba(34,211,238,.1);color:var(--cyan);border:1px solid rgba(34,211,238,.2)}
+.bapp{background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.2)}
+.bann{background:rgba(107,114,128,.1);color:var(--gray);border:1px solid rgba(107,114,128,.2)}
+.disc-chip{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-family:var(--font-mono);font-weight:700;background:var(--bg3);color:var(--t3);border:1px solid var(--border2)}
+
+/* ─── PAGINATION ─── */
+.pager{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid var(--border);font-size:11px;color:var(--t4)}
+.pager-btns{display:flex;gap:6px}
+
+/* ─── MODAL ─── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(2px)}
+.overlay.open{display:flex}
+.modal{background:var(--bg1);border:1px solid var(--border2);border-radius:12px;width:620px;max-height:92vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.5)}
+.mhdr{padding:20px 22px 0;display:flex;align-items:center;justify-content:space-between}
+.mtitle{font-size:15px;font-weight:700}
+.mclose{background:none;border:none;color:var(--t3);font-size:22px;cursor:pointer;line-height:1;padding:2px 6px;border-radius:5px}
+.mclose:hover{color:var(--t1);background:var(--bg3)}
+.mbody{padding:18px 22px 22px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.fg{display:flex;flex-direction:column;gap:5px}
+.fg.full{grid-column:1/-1}
+.flbl{font-size:11px;color:var(--t3);font-weight:600;letter-spacing:.03em;text-transform:uppercase}
+.finp,.fsel,.ftxt{background:var(--bg3);border:1px solid var(--border2);border-radius:7px;padding:8px 11px;font-size:12px;color:var(--t1);outline:none;font-family:inherit;width:100%;transition:border-color .15s}
+.finp:focus,.fsel:focus,.ftxt:focus{border-color:var(--blue)}
+.ftxt{resize:vertical;min-height:68px}
+.mfooter{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;padding-top:16px;border-top:1px solid var(--border)}
+
+/* ─── API CONFIG ─── */
+.cfg-card{background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:24px;max-width:640px}
+.cfg-sec{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--t4);font-weight:700;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.cfg-form{display:flex;flex-direction:column;gap:12px;margin-bottom:18px}
+.info{background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.18);border-radius:7px;padding:12px 14px;font-size:11px;color:var(--t3);line-height:1.7;margin-bottom:14px}
+.info a{color:var(--blue);text-decoration:none}
+.code{background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:13px;font-family:var(--font-mono);font-size:10.5px;color:#93c5fd;line-height:1.75;overflow-x:auto;margin-bottom:16px;white-space:pre}
+.cfg-status{font-size:12px;color:var(--t3);line-height:1.9}
+.cfg-hl{font-weight:700;color:var(--amber)}
+.cfg-hl.on{color:var(--green)}
+
+/* ─── EMPTY STATE ─── */
+.empty{text-align:center;padding:52px 20px;color:var(--t4)}
+.empty-icon{font-size:36px;margin-bottom:10px;opacity:.25}
+.empty-msg{font-size:13px;margin-bottom:14px}
+
+/* ─── TOAST ─── */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:11px 16px;font-size:12px;color:var(--t1);z-index:2000;transform:translateY(80px);opacity:0;transition:all .28s;max-width:280px;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{border-left:3px solid var(--green)}
+.toast.err{border-left:3px solid var(--red)}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg1)}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="logo">
+    <div class="logo-icon">F</div>
+    <span>Forma Elaborati</span>
+  </div>
+  <div class="vsep"></div>
+  <div class="proj-pill" id="projPill">
+    <span class="proj-dot" id="projDot"></span>
+    <span id="projName">Nessun progetto configurato</span>
+  </div>
+  <div class="ml-a api-badge">
+    <span class="proj-dot" id="apiDot"></span>
+    <span id="apiTxt">Modalità locale</span>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" data-tab="dashboard">Dashboard</div>
+  <div class="tab" data-tab="elenco">Elenco Elaborati</div>
+  <div class="tab" data-tab="api">Configurazione API</div>
+</div>
+
+<div class="page">
+
+  <!-- ═══════════════════════ DASHBOARD ═══════════════════════ -->
+  <div class="panel active" id="panel-dashboard">
+    <div class="stats" id="statsGrid"></div>
+    <div class="dprog">
+      <div class="section-title">Avanzamento per disciplina</div>
+      <div id="discRows"></div>
+    </div>
+    <div class="charts">
+      <div class="ccard"><div class="section-title">Distribuzione stati</div><canvas id="cStati" height="200"></canvas></div>
+      <div class="ccard"><div class="section-title">Elaborati per disciplina</div><canvas id="cDisc" height="200"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ ELENCO ═══════════════════════ -->
+  <div class="panel" id="panel-elenco">
+    <div class="toolbar">
+      <input type="text" class="search" id="srch" placeholder="🔍  Cerca codice, titolo, responsabile…">
+      <select class="fsel" id="fDisc">
+        <option value="">Tutte le discipline</option>
+        <option value="AR">AR — Architettura</option>
+        <option value="ST">ST — Strutture</option>
+        <option value="IM">IM — Imp. Meccanici</option>
+        <option value="IE">IE — Imp. Elettrici</option>
+        <option value="UR">UR — Urbanistica</option>
+        <option value="PA">PA — Paesaggio</option>
+        <option value="CO">CO — Coordinamento</option>
+      </select>
+      <select class="fsel" id="fStato">
+        <option value="">Tutti gli stati</option>
+        <option>WIP</option>
+        <option>In Revisione</option>
+        <option>Emesso</option>
+        <option>Approvato</option>
+        <option>Annullato</option>
+      </select>
+      <button class="btn btn-g btn-sm" onclick="exportCSV()">↓ CSV</button>
+      <button class="btn btn-g btn-sm" onclick="resetSample()">↺ Ripristina dati demo</button>
+      <button class="btn btn-p" onclick="openModal()" style="margin-left:auto">+ Aggiungi elaborato</button>
+    </div>
+    <div class="twrap">
+      <table>
+        <colgroup>
+          <col style="width:110px"><col style="width:220px"><col style="width:60px">
+          <col style="width:110px"><col style="width:52px"><col style="width:110px">
+          <col style="width:90px"><col><col style="width:78px">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Codice</th><th>Titolo</th><th>Disc.</th><th>Stato</th>
+            <th>Rev.</th><th>Responsabile</th><th>Scadenza</th><th>Note</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="tBody"></tbody>
+      </table>
+      <div class="pager">
+        <span id="pgInfo"></span>
+        <div class="pager-btns">
+          <button class="btn btn-g btn-sm" id="pgPrev" onclick="prevPg()">‹ Prec.</button>
+          <button class="btn btn-g btn-sm" id="pgNext" onclick="nextPg()">Succ. ›</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ API CONFIG ═══════════════════════ -->
+  <div class="panel" id="panel-api">
+    <div class="cfg-card">
+      <div class="cfg-sec">Autodesk Platform Services (APS) — OAuth 2.0</div>
+      <div class="info">
+        Questa app si connette a Forma tramite le API APS. Crea un'applicazione su
+        <a href="https://aps.autodesk.com" target="_blank">APS Developer Portal</a> con
+        scopes <code>data:read data:write</code> e un Callback URL che punti a questa pagina.
+        Il token viene ottenuto con flusso <strong>3-legged (Authorization Code)</strong>.
+        <br><br>
+        ⚠ Per sicurezza, <strong>non inserire mai il Client Secret in un'app front-end pubblica</strong>.
+        In produzione usa un backend proxy (es. Azure Function, Node.js) per scambiare il token.
+      </div>
+      <div class="cfg-form">
+        <div class="fg">
+          <label class="flbl">APS Client ID</label>
+          <input class="finp" id="cClientId" placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+        </div>
+        <div class="fg">
+          <label class="flbl">APS Client Secret <span style="color:var(--red);font-size:10px">(solo per test locale)</span></label>
+          <input class="finp" id="cClientSecret" type="password" placeholder="••••••••••••••••••••••••••" autocomplete="off">
+        </div>
+        <div class="fg">
+          <label class="flbl">Forma Project ID</label>
+          <input class="finp" id="cProjectId" placeholder="urn:adsk.forma:fs.folder:eu.…" autocomplete="off">
+        </div>
+        <div class="fg">
+          <label class="flbl">Regione</label>
+          <select class="fsel" id="cRegion" style="width:100%">
+            <option value="eu">Europa — app.autodeskforma.eu</option>
+            <option value="us">USA — app.autodeskforma.com</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:24px">
+        <button class="btn btn-p" onclick="testConn()">Testa connessione</button>
+        <button class="btn btn-g" onclick="saveCfg()">Salva configurazione</button>
+        <button class="btn btn-g" onclick="syncFromForma()">↓ Sincronizza da Forma</button>
+        <button class="btn btn-g" onclick="pushToForma()">↑ Pubblica su Forma</button>
+      </div>
+
+      <div class="cfg-sec">Forma Data API — Schema endpoint</div>
+      <div class="code">// ────────────── LETTURA ──────────────
+GET  {BASE}/data/v1/projects/{projectId}/properties
+     ?category=elenco_elaborati
+
+// ────────────── SCRITTURA ─────────────
+POST {BASE}/data/v1/projects/{projectId}/properties
+Body: {
+  "category": "elenco_elaborati",
+  "key":      "elaborati",
+  "value":    [ /* array JSON degli elaborati */ ]
+}
+
+// ────────────── HEADERS RICHIESTI ──────
+Authorization: Bearer {aps_access_token}
+Content-Type:  application/json
+x-ads-region:  EMEA   // oppure US
+
+// ────────────── BASE URL per regione ───
+EU: https://app.autodeskforma.eu/api
+US: https://app.autodeskforma.com/api</div>
+
+      <div class="cfg-sec">Stato corrente</div>
+      <div class="cfg-status">
+        Modalità dati: <strong class="cfg-hl" id="modeLabel">Locale (localStorage)</strong><br>
+        Progetto configurato: <span id="cfgProjTxt" style="color:var(--t3)">—</span><br>
+        Elaborati in memoria: <span id="cfgCount">0</span><br>
+        Ultimo salvataggio: <span id="cfgSaved" style="color:var(--t3)">—</span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<!-- MODAL ADD/EDIT -->
+<div class="overlay" id="ovl" onclick="bgClose(event)">
+  <div class="modal">
+    <div class="mhdr">
+      <div class="mtitle" id="mTitle">Nuovo elaborato</div>
+      <button class="mclose" onclick="closeModal()">×</button>
+    </div>
+    <div class="mbody">
+      <div class="fgrid">
+        <div class="fg">
+          <label class="flbl">Codice *</label>
+          <input class="finp" id="fCodice" placeholder="AR-PL-001">
+        </div>
+        <div class="fg">
+          <label class="flbl">Disciplina *</label>
+          <select class="fsel" id="fDisciplina">
+            <option value="AR">AR — Architettura</option>
+            <option value="ST">ST — Strutture</option>
+            <option value="IM">IM — Imp. Meccanici</option>
+            <option value="IE">IE — Imp. Elettrici</option>
+            <option value="UR">UR — Urbanistica</option>
+            <option value="PA">PA — Paesaggio</option>
+            <option value="CO">CO — Coordinamento</option>
+          </select>
+        </div>
+        <div class="fg full">
+          <label class="flbl">Titolo *</label>
+          <input class="finp" id="fTitolo" placeholder="Planimetria generale piano terra">
+        </div>
+        <div class="fg">
+          <label class="flbl">Stato</label>
+          <select class="fsel" id="fStato">
+            <option>WIP</option><option>In Revisione</option>
+            <option>Emesso</option><option>Approvato</option><option>Annullato</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="flbl">Revisione</label>
+          <input class="finp" id="fRev" placeholder="00">
+        </div>
+        <div class="fg">
+          <label class="flbl">Responsabile</label>
+          <input class="finp" id="fResp" placeholder="M. Rossi">
+        </div>
+        <div class="fg">
+          <label class="flbl">Data emissione</label>
+          <input class="finp" type="date" id="fDataE">
+        </div>
+        <div class="fg">
+          <label class="flbl">Data scadenza</label>
+          <input class="finp" type="date" id="fDataS">
+        </div>
+        <div class="fg full">
+          <label class="flbl">Note</label>
+          <textarea class="ftxt" id="fNote" placeholder="Eventuali annotazioni…"></textarea>
+        </div>
+      </div>
+      <div class="mfooter">
+        <button class="btn btn-g" onclick="closeModal()">Annulla</button>
+        <button class="btn btn-p" onclick="saveElab()">Salva elaborato</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ================================================================
+// DATI E STATO
+// ================================================================
+let elabs = [];
+let editId = null;
+let pg = 1;
+const PG = 15;
+let cStati = null, cDisc = null;
+
+const DISC_NAMES = {AR:'Architettura',ST:'Strutture',IM:'Imp. Meccanici',IE:'Imp. Elettrici',UR:'Urbanistica',PA:'Paesaggio',CO:'Coordinamento'};
+const DISC_COLORS = {AR:'#3b82f6',ST:'#10b981',IM:'#f59e0b',IE:'#22d3ee',UR:'#a78bfa',PA:'#34d399',CO:'#fb923c'};
+const STATO_CFG = {
+  'WIP':         {cls:'bwip',hex:'#f59e0b'},
+  'In Revisione':{cls:'brev',hex:'#60a5fa'},
+  'Emesso':      {cls:'bemi',hex:'#22d3ee'},
+  'Approvato':   {cls:'bapp',hex:'#10b981'},
+  'Annullato':   {cls:'bann',hex:'#6b7280'}
+};
+
+const SAMPLE = [
+  {id:'s1',codice:'AR-PL-001',titolo:'Planimetria piano terra — Stato di fatto',disciplina:'AR',stato:'Approvato',revisione:'02',responsabile:'M. Bianchi',dataE:'2024-11-15',dataS:'2024-10-30',note:''},
+  {id:'s2',codice:'AR-PL-002',titolo:'Planimetria piano primo',disciplina:'AR',stato:'Emesso',revisione:'01',responsabile:'M. Bianchi',dataE:'2024-11-20',dataS:'2024-11-10',note:''},
+  {id:'s3',codice:'AR-PL-003',titolo:'Planimetria piano secondo',disciplina:'AR',stato:'In Revisione',revisione:'01',responsabile:'F. Verdi',dataE:'',dataS:'2024-12-05',note:'In attesa feedback cliente'},
+  {id:'s4',codice:'AR-SE-001',titolo:'Sezione longitudinale A-A',disciplina:'AR',stato:'WIP',revisione:'00',responsabile:'F. Verdi',dataE:'',dataS:'2024-12-15',note:''},
+  {id:'s5',codice:'AR-SE-002',titolo:'Sezione trasversale B-B',disciplina:'AR',stato:'WIP',revisione:'00',responsabile:'M. Bianchi',dataE:'',dataS:'2024-12-20',note:''},
+  {id:'s6',codice:'AR-PR-001',titolo:'Prospetto nord',disciplina:'AR',stato:'Emesso',revisione:'01',responsabile:'M. Bianchi',dataE:'2024-11-25',dataS:'2024-11-15',note:''},
+  {id:'s7',codice:'AR-DE-001',titolo:'Dettaglio facciata tipo',disciplina:'AR',stato:'Annullato',revisione:'00',responsabile:'F. Verdi',dataE:'',dataS:'',note:'Sostituito da AR-DE-002'},
+  {id:'s8',codice:'ST-FD-001',titolo:'Planimetria fondazioni',disciplina:'ST',stato:'Approvato',revisione:'02',responsabile:'L. Esposito',dataE:'2024-11-10',dataS:'2024-11-01',note:''},
+  {id:'s9',codice:'ST-SO-001',titolo:'Piano solaio piano terra',disciplina:'ST',stato:'In Revisione',revisione:'01',responsabile:'L. Esposito',dataE:'',dataS:'2024-12-01',note:'Verifica carichi in corso'},
+  {id:'s10',codice:'ST-SC-001',titolo:'Schema strutturale generale',disciplina:'ST',stato:'WIP',revisione:'00',responsabile:'A. Romano',dataE:'',dataS:'2024-12-18',note:''},
+  {id:'s11',codice:'IM-SC-001',titolo:'Schema impianto idraulico',disciplina:'IM',stato:'WIP',revisione:'00',responsabile:'C. Ferrari',dataE:'',dataS:'2025-01-10',note:''},
+  {id:'s12',codice:'IM-PL-001',titolo:'Planimetria impianto riscaldamento',disciplina:'IM',stato:'WIP',revisione:'00',responsabile:'C. Ferrari',dataE:'',dataS:'2025-01-15',note:''},
+  {id:'s13',codice:'IE-SC-001',titolo:'Schema elettrico generale',disciplina:'IE',stato:'Emesso',revisione:'01',responsabile:'G. Ricci',dataE:'2024-11-28',dataS:'2024-11-20',note:''},
+  {id:'s14',codice:'IE-PL-001',titolo:'Planimetria quadri elettrici',disciplina:'IE',stato:'WIP',revisione:'00',responsabile:'G. Ricci',dataE:'',dataS:'2025-01-05',note:''},
+  {id:'s15',codice:'UR-PL-001',titolo:'Inquadramento urbanistico',disciplina:'UR',stato:'Approvato',revisione:'01',responsabile:'S. Conti',dataE:'2024-10-20',dataS:'2024-10-15',note:''},
+  {id:'s16',codice:'PA-PL-001',titolo:'Progetto del verde e degli spazi aperti',disciplina:'PA',stato:'WIP',revisione:'00',responsabile:'T. Moro',dataE:'',dataS:'2025-01-20',note:''},
+  {id:'s17',codice:'CO-RE-001',titolo:'Relazione tecnica generale',disciplina:'CO',stato:'In Revisione',revisione:'01',responsabile:'M. Bianchi',dataE:'',dataS:'2024-12-10',note:'Sezione materiali da rivedere'},
+];
+
+// ================================================================
+// FORMA API (stub — da collegare con token APS reale)
+// ================================================================
+const formaAPI = {
+  cfg: {clientId:'',clientSecret:'',projectId:'',region:'eu',token:''},
+  connected: false,
+
+  base() {
+    return this.cfg.region==='eu'
+      ? 'https://app.autodeskforma.eu/api'
+      : 'https://app.autodeskforma.com/api';
+  },
+
+  // Lettura da Forma Data API
+  async load() {
+    if(!this.connected||!this.cfg.token) return null;
+    try {
+      const r = await fetch(
+        `${this.base()}/data/v1/projects/${encodeURIComponent(this.cfg.projectId)}/properties?category=elenco_elaborati`,
+        { headers:{ Authorization:`Bearer ${this.cfg.token}`, 'x-ads-region': this.cfg.region==='eu'?'EMEA':'US' } }
+      );
+      if(!r.ok) throw new Error(`HTTP ${r.status}`);
+      const j = await r.json();
+      const prop = (j.results||[]).find(p=>p.key==='elaborati');
+      return prop?.value || [];
+    } catch(e) { console.error('[Forma load]',e); return null; }
+  },
+
+  // Scrittura su Forma Data API
+  async save(data) {
+    if(!this.connected||!this.cfg.token) return false;
+    try {
+      const r = await fetch(
+        `${this.base()}/data/v1/projects/${encodeURIComponent(this.cfg.projectId)}/properties`,
+        {
+          method:'POST',
+          headers:{
+            Authorization:`Bearer ${this.cfg.token}`,
+            'Content-Type':'application/json',
+            'x-ads-region': this.cfg.region==='eu'?'EMEA':'US'
+          },
+          body: JSON.stringify({ category:'elenco_elaborati', key:'elaborati', value:data })
+        }
+      );
+      return r.ok;
+    } catch(e) { console.error('[Forma save]',e); return false; }
+  }
+};
+
+// ================================================================
+// PERSISTENZA
+// ================================================================
+function loadLocal() {
+  const s = localStorage.getItem('forma_elabs_v2');
+  elabs = s ? JSON.parse(s) : SAMPLE.map(x=>({...x}));
+  updateStatus();
+}
+function saveLocal() {
+  localStorage.setItem('forma_elabs_v2', JSON.stringify(elabs));
+  updateStatus();
+}
+function resetSample() {
+  if(!confirm('Ripristinare i dati di esempio? I dati locali saranno sovrascritti.')) return;
+  elabs = SAMPLE.map(x=>({...x}));
+  saveLocal(); renderTable(); renderDash();
+  toast('Dati demo ripristinati','ok');
+}
+function updateStatus() {
+  document.getElementById('cfgCount').textContent = elabs.length;
+  document.getElementById('cfgSaved').textContent = new Date().toLocaleString('it-IT');
+}
+
+// ================================================================
+// TABS
+// ================================================================
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    const p = document.getElementById('panel-'+t.dataset.tab);
+    if(p) p.classList.add('active');
+    if(t.dataset.tab==='dashboard') renderDash();
+  });
+});
+
+// ================================================================
+// TABELLA
+// ================================================================
+function filtered() {
+  const q = (document.getElementById('srch').value||'').toLowerCase();
+  const d = document.getElementById('fDisc').value;
+  const s = document.getElementById('fStato').value;
+  return elabs.filter(e => {
+    const mq = !q || e.codice.toLowerCase().includes(q) || e.titolo.toLowerCase().includes(q) || (e.responsabile||'').toLowerCase().includes(q);
+    return mq && (!d||e.disciplina===d) && (!s||e.stato===s);
+  });
+}
+
+['srch','fDisc','fStato'].forEach(id => {
+  document.getElementById(id).addEventListener('input', ()=>{ pg=1; renderTable(); });
+  document.getElementById(id).addEventListener('change', ()=>{ pg=1; renderTable(); });
+});
+
+function renderTable() {
+  const all = filtered();
+  const start = (pg-1)*PG;
+  const rows = all.slice(start, start+PG);
+
+  const pgInfo = document.getElementById('pgInfo');
+  pgInfo.textContent = all.length===0 ? 'Nessun risultato' : `${start+1}–${Math.min(start+PG,all.length)} di ${all.length} elaborati`;
+  document.getElementById('pgPrev').disabled = pg===1;
+  document.getElementById('pgNext').disabled = start+PG>=all.length;
+
+  const tb = document.getElementById('tBody');
+  if(!rows.length){
+    tb.innerHTML=`<tr><td colspan="9"><div class="empty"><div class="empty-icon">📄</div><div class="empty-msg">Nessun elaborato trovato</div><button class="btn btn-p btn-sm" onclick="openModal()">+ Aggiungi elaborato</button></div></td></tr>`;
+    return;
+  }
+  tb.innerHTML = rows.map(e => {
+    const scad = e.dataS ? fmtDate(e.dataS) : '—';
+    const scadCls = isOverdue(e) ? 'td-red' : 'td-muted';
+    const bc = STATO_CFG[e.stato]?.cls||'';
+    return `<tr>
+      <td class="tcode td-ell" title="${e.codice}">${e.codice}</td>
+      <td class="td-ell" style="color:var(--t2)" title="${e.titolo}">${e.titolo}</td>
+      <td><span class="disc-chip">${e.disciplina}</span></td>
+      <td><span class="badge ${bc}">${e.stato}</span></td>
+      <td class="td-mono" style="text-align:center">${e.revisione||'—'}</td>
+      <td class="td-muted td-ell">${e.responsabile||'—'}</td>
+      <td class="${scadCls}" style="font-size:11px">${scad}</td>
+      <td class="td-ell" style="color:var(--t4);font-size:11px" title="${e.note}">${e.note||''}</td>
+      <td><div class="td-act">
+        <button class="btn btn-g btn-ic btn-sm" onclick='openModal(${JSON.stringify(e)})' title="Modifica">✎</button>
+        <button class="btn btn-d btn-ic btn-sm" onclick="delElab('${e.id}')" title="Elimina">✕</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function isOverdue(e) {
+  if(!e.dataS || ['Approvato','Annullato','Emesso'].includes(e.stato)) return false;
+  return new Date(e.dataS) < new Date();
+}
+function fmtDate(d) {
+  if(!d) return '—';
+  const [y,m,g] = d.split('-');
+  return `${g}/${m}/${y}`;
+}
+function prevPg(){ if(pg>1){ pg--; renderTable(); } }
+function nextPg(){ if((pg-1)*PG+PG<filtered().length){ pg++; renderTable(); } }
+
+// ================================================================
+// DASHBOARD
+// ================================================================
+function renderDash() {
+  const tot = elabs.length;
+  if(!tot) return;
+  const byS = s => elabs.filter(e=>e.stato===s).length;
+  const wip=byS('WIP'), rev=byS('In Revisione'), emi=byS('Emesso'), app=byS('Approvato');
+
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="scard b"><div class="slabel">Totale elaborati</div><div class="sval">${tot}</div><div class="ssub">${app} approvati (${pct(app,tot)}%)</div></div>
+    <div class="scard a"><div class="slabel">In lavorazione</div><div class="sval">${wip}</div><div class="ssub">${rev} in revisione</div></div>
+    <div class="scard c"><div class="slabel">Emessi</div><div class="sval">${emi}</div><div class="ssub">${pct(emi,tot)}% del totale</div></div>
+    <div class="scard g"><div class="slabel">Approvati</div><div class="sval">${app}</div><div class="ssub">${pct(emi+app,tot)}% completati</div></div>
+  `;
+
+  const discs = Object.keys(DISC_NAMES);
+  document.getElementById('discRows').innerHTML = discs.map(d => {
+    const all = elabs.filter(e=>e.disciplina===d);
+    if(!all.length) return '';
+    const done = all.filter(e=>['Emesso','Approvato'].includes(e.stato)).length;
+    const p = pct(done,all.length);
+    return `<div class="drow">
+      <div class="dname">${DISC_NAMES[d]}</div>
+      <div class="dbar"><div class="dfill" style="width:${p}%;background:${DISC_COLORS[d]}"></div></div>
+      <div class="dcnt">${done}/${all.length} · ${p}%</div>
+    </div>`;
+  }).join('');
+
+  const sLabels = Object.keys(STATO_CFG);
+  const sCounts = sLabels.map(s=>byS(s));
+  const sColors = sLabels.map(s=>STATO_CFG[s].hex);
+
+  if(cStati) cStati.destroy();
+  cStati = new Chart(document.getElementById('cStati'), {
+    type:'doughnut',
+    data:{ labels:sLabels, datasets:[{ data:sCounts, backgroundColor:sColors, borderWidth:0, hoverOffset:5 }] },
+    options:{ plugins:{ legend:{ labels:{ color:'#6d8aa4', font:{ size:11 } } } }, cutout:'58%' }
+  });
+
+  const dCounts = discs.map(d=>elabs.filter(e=>e.disciplina===d).length);
+  const dColors = discs.map(d=>DISC_COLORS[d]);
+  if(cDisc) cDisc.destroy();
+  cDisc = new Chart(document.getElementById('cDisc'), {
+    type:'bar',
+    data:{ labels:discs, datasets:[{ data:dCounts, backgroundColor:dColors, borderWidth:0, borderRadius:5 }] },
+    options:{
+      plugins:{ legend:{ display:false } },
+      scales:{
+        x:{ ticks:{ color:'#6d8aa4', font:{size:11} }, grid:{ color:'#162032' } },
+        y:{ ticks:{ color:'#6d8aa4', stepSize:1, font:{size:11} }, grid:{ color:'#162032' } }
+      }
+    }
+  });
+}
+
+function pct(a,b){ return b?Math.round(a/b*100):0; }
+
+// ================================================================
+// MODAL
+// ================================================================
+function openModal(e=null) {
+  editId = e?.id||null;
+  document.getElementById('mTitle').textContent = e ? 'Modifica elaborato' : 'Nuovo elaborato';
+  document.getElementById('fCodice').value    = e?.codice||'';
+  document.getElementById('fTitolo').value    = e?.titolo||'';
+  document.getElementById('fDisciplina').value= e?.disciplina||'AR';
+  document.getElementById('fStato').value     = e?.stato||'WIP';
+  document.getElementById('fRev').value       = e?.revisione||'00';
+  document.getElementById('fResp').value      = e?.responsabile||'';
+  document.getElementById('fDataE').value     = e?.dataE||'';
+  document.getElementById('fDataS').value     = e?.dataS||'';
+  document.getElementById('fNote').value      = e?.note||'';
+  document.getElementById('ovl').classList.add('open');
+  document.getElementById('fCodice').focus();
+}
+function closeModal(){ document.getElementById('ovl').classList.remove('open'); editId=null; }
+function bgClose(ev){ if(ev.target===document.getElementById('ovl')) closeModal(); }
+
+function saveElab() {
+  const codice = document.getElementById('fCodice').value.trim();
+  const titolo = document.getElementById('fTitolo').value.trim();
+  if(!codice||!titolo){ toast('Codice e titolo sono obbligatori','err'); return; }
+  const row = {
+    id: editId||String(Date.now()),
+    codice, titolo,
+    disciplina: document.getElementById('fDisciplina').value,
+    stato:      document.getElementById('fStato').value,
+    revisione:  document.getElementById('fRev').value.trim()||'00',
+    responsabile: document.getElementById('fResp').value.trim(),
+    dataE:      document.getElementById('fDataE').value,
+    dataS:      document.getElementById('fDataS').value,
+    note:       document.getElementById('fNote').value.trim()
+  };
+  if(editId){ const i=elabs.findIndex(x=>x.id===editId); if(i>-1) elabs[i]=row; }
+  else elabs.push(row);
+  saveLocal(); renderTable(); closeModal();
+  toast(editId?'Elaborato aggiornato ✓':'Elaborato aggiunto ✓','ok');
+}
+
+function delElab(id){
+  if(!confirm('Eliminare questo elaborato?')) return;
+  elabs = elabs.filter(x=>x.id!==id);
+  saveLocal(); renderTable();
+  toast('Eliminato','ok');
+}
+
+// ================================================================
+// EXPORT CSV
+// ================================================================
+function exportCSV() {
+  const hdr = ['Codice','Titolo','Disciplina','Stato','Revisione','Responsabile','Data Emissione','Data Scadenza','Note'];
+  const rows = filtered().map(e=>[e.codice,e.titolo,e.disciplina,e.stato,e.revisione,e.responsabile,e.dataE,e.dataS,e.note]);
+  const csv = [hdr,...rows].map(r=>r.map(v=>`"${(v||'').replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download = `elenco_elaborati_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  toast('CSV esportato','ok');
+}
+
+// ================================================================
+// API CONFIG UI
+// ================================================================
+function saveCfg(){
+  formaAPI.cfg.clientId     = document.getElementById('cClientId').value.trim();
+  formaAPI.cfg.clientSecret = document.getElementById('cClientSecret').value.trim();
+  formaAPI.cfg.projectId    = document.getElementById('cProjectId').value.trim();
+  formaAPI.cfg.region       = document.getElementById('cRegion').value;
+  const pid = formaAPI.cfg.projectId;
+  document.getElementById('cfgProjTxt').textContent = pid||'—';
+  document.getElementById('projName').textContent = pid ? pid.slice(-24)+'…' : 'Nessun progetto configurato';
+  localStorage.setItem('forma_cfg_v2', JSON.stringify({
+    clientId:formaAPI.cfg.clientId, projectId:pid, region:formaAPI.cfg.region
+  }));
+  toast('Configurazione salvata','ok');
+}
+
+function testConn(){
+  const pid = document.getElementById('cProjectId').value.trim();
+  const cid = document.getElementById('cClientId').value.trim();
+  if(!pid||!cid){ toast('Inserisci Client ID e Project ID','err'); return; }
+  toast('Per il test reale serve un token APS 3-legged. Vedi console per istruzioni.','err');
+  console.info(`
+  [FORMA API - TEST]
+  Base URL : ${formaAPI.base()}
+  Project  : ${pid}
+  Endpoint : GET ${formaAPI.base()}/data/v1/projects/${encodeURIComponent(pid)}/properties?category=elenco_elaborati
+  → Ottieni un access_token via APS OAuth e chiamare con:
+    Authorization: Bearer <token>
+    x-ads-region: ${formaAPI.cfg.region==='eu'?'EMEA':'US'}
+  `);
+}
+
+async function syncFromForma(){
+  toast('Sinronizzazione: richiede token APS attivo. Caricamento da localStorage.','err');
+}
+async function pushToForma(){
+  toast('Pubblicazione: richiede token APS attivo. Dati salvati localmente.','err');
+}
+
+// ================================================================
+// TOAST
+// ================================================================
+function toast(msg, type='ok'){
+  const t = document.getElementById('toast');
+  t.textContent=msg; t.className=`toast ${type} show`;
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ================================================================
+// INIT
+// ================================================================
+(function init(){
+  loadLocal();
+  // ripristina config APS se salvata
+  const c = localStorage.getItem('forma_cfg_v2');
+  if(c){
+    const j = JSON.parse(c);
+    document.getElementById('cClientId').value   = j.clientId||'';
+    document.getElementById('cProjectId').value  = j.projectId||'';
+    document.getElementById('cRegion').value     = j.region||'eu';
+    formaAPI.cfg = {...formaAPI.cfg,...j};
+    if(j.projectId){
+      document.getElementById('projName').textContent = j.projectId.slice(-24)+'…';
+      document.getElementById('cfgProjTxt').textContent = j.projectId;
+    }
+  }
+  renderTable();
+  renderDash();
+})();
+</script>
+</body>
+</html>
